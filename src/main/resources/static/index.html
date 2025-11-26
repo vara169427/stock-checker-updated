@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>IQOO Stock Monitor</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --bg-card: #111827;
+            --bg-soft: #020617;
+            --accent: #3b82f6;
+            --accent-soft: rgba(59,130,246,0.14);
+            --accent-strong: #22c55e;
+            --danger: #ef4444;
+            --border-subtle: #1f2937;
+            --text-main: #e5e7eb;
+            --text-muted: #9ca3af;
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --shadow-soft: 0 18px 45px rgba(15,23,42,0.9);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: radial-gradient(circle at top, #1d2537 0, #020617 40%, #000 100%);
+            color: var(--text-main);
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+            padding: 32px 16px;
+        }
+
+        .shell {
+            width: 100%;
+            max-width: 1160px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .title-block h1 {
+            margin: 0 0 4px;
+            font-size: 26px;
+            letter-spacing: 0.04em;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .title-pill {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            padding: 3px 9px;
+            border-radius: 999px;
+            border: 1px solid rgba(148,163,184,0.45);
+            color: var(--text-muted);
+            background: linear-gradient(to right, rgba(15,23,42,0.8), rgba(15,23,42,0.1));
+        }
+
+        .title-block p {
+            margin: 2px 0 0;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .status-chip {
+            padding: 6px 11px;
+            border-radius: 999px;
+            border: 1px solid rgba(34,197,94,0.4);
+            background: radial-gradient(circle at 0 0, rgba(34,197,94,0.2), transparent 55%);
+            font-size: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #bbf7d0;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: var(--accent-strong);
+            box-shadow: 0 0 14px rgba(34,197,94,0.85);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr);
+            gap: 18px;
+        }
+
+        @media (max-width: 960px) {
+            body {
+                padding: 18px 10px;
+            }
+            .grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+
+        .card {
+            background: linear-gradient(135deg, rgba(15,23,42,0.98), rgba(15,23,42,0.96));
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-subtle);
+            box-shadow: var(--shadow-soft);
+            padding: 18px 18px 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: "";
+            position: absolute;
+            inset: -40%;
+            background: radial-gradient(circle at 0 0, rgba(56,189,248,0.16), transparent 58%);
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .card-inner {
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .card-header .title {
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: #e5e7eb;
+        }
+
+        .card-header .subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 3px;
+        }
+
+        .badge {
+            font-size: 11px;
+            padding: 3px 9px;
+            border-radius: 999px;
+            border: 1px solid rgba(148,163,184,0.5);
+            color: var(--text-muted);
+            background: rgba(15,23,42,0.75);
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+
+        input, textarea {
+            width: 100%;
+            border-radius: 9px;
+            border: 1px solid rgba(55,65,81,0.95);
+            background: rgba(15,23,42,0.96);
+            color: var(--text-main);
+            padding: 7px 9px;
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        }
+
+        input:focus, textarea:focus {
+            border-color: rgba(59,130,246,0.85);
+            box-shadow: 0 0 0 1px rgba(59,130,246,0.6);
+            background: #020617;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+
+        .field-row {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .button-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        button {
+            border-radius: 999px;
+            border: 1px solid transparent;
+            padding: 7px 15px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            letter-spacing: 0.02em;
+            transition: background 0.2s ease, transform 0.08s ease, box-shadow 0.18s ease, border-color 0.2s ease, color 0.2s ease;
+        }
+
+        button:active {
+            transform: translateY(1px);
+            box-shadow: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, var(--accent), #60a5fa);
+            color: white;
+            box-shadow: 0 10px 25px rgba(37,99,235,0.55);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(to right, #2563eb, #60a5fa);
+        }
+
+        .btn-outline {
+            background: rgba(15,23,42,0.9);
+            color: var(--text-main);
+            border-color: rgba(75,85,99,0.9);
+        }
+
+        .btn-outline:hover {
+            border-color: rgba(148,163,184,0.95);
+            background: radial-gradient(circle at top, rgba(148,163,184,0.16), rgba(15,23,42,1));
+        }
+
+        .btn-danger {
+            background: linear-gradient(to right, rgba(239,68,68,0.95), rgba(248,113,113,0.95));
+            color: white;
+            border-color: rgba(239,68,68,0.9);
+            box-shadow: 0 10px 25px rgba(239,68,68,0.6);
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(to right, #dc2626, #ef4444);
+        }
+
+        .pill {
+            font-size: 11px;
+            padding: 2px 7px;
+            border-radius: 999px;
+            background: rgba(15,23,42,0.9);
+            border: 1px solid rgba(75,85,99,0.9);
+            color: var(--text-muted);
+        }
+
+        .logBox {
+            height: 260px;
+            border-radius: 10px;
+            border: 1px solid rgba(55,65,81,0.95);
+            background:
+                radial-gradient(circle at 0 0, rgba(59,130,246,0.14), transparent 55%),
+                radial-gradient(circle at 100% 100%, rgba(56,189,248,0.1), transparent 55%),
+                rgba(15,23,42,0.98);
+            overflow-y: auto;
+            white-space: pre-wrap;
+            padding: 8px 9px;
+            font-size: 12px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            color: #e5e7eb;
+        }
+
+        .logBox::-webkit-scrollbar {
+            width: 7px;
+        }
+        .logBox::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .logBox::-webkit-scrollbar-thumb {
+            background: rgba(55,65,81,0.9);
+            border-radius: 999px;
+        }
+
+        .hint {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 3px;
+        }
+
+        .columns-logs {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            gap: 14px;
+        }
+
+        @media (max-width: 800px) {
+            .columns-logs {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="shell">
+    <div class="header">
+        <div class="title-block">
+            <div class="title-pill">Realtime stock watcher</div>
+            <h1>
+                IQOO Stock Monitor
+                <span style="font-size:18px; color:#38bdf8;">●</span>
+            </h1>
+            <p>Paste product URLs, fine‑tune selectors, and get instant “Buy Now” alerts (with Telegram ping).</p>
+        </div>
+        <div class="status-chip">
+            <span class="status-dot"></span>
+            Service online
+        </div>
+    </div>
+
+    <div class="grid">
+        <!-- LEFT: settings + URLs -->
+        <div class="card">
+            <div class="card-inner">
+                <div class="card-header">
+                    <div>
+                        <div class="title">Configuration</div>
+                        <div class="subtitle">Selectors + URL batch you want to watch</div>
+                    </div>
+                    <span class="badge">Step 1 · Configure &amp; start</span>
+                </div>
+
+                <div class="field-row">
+                    <div>
+                        <label for="buyNowPath">Buy Now CSS selector</label>
+                        <input id="buyNowPath" type="text" placeholder="Example: div.btn-buynow.btn">
+                        <div class="hint">Element that appears when the item is actually purchasable.</div>
+                    </div>
+
+                    <div>
+                        <label for="notifyPath">Notify Me / Out of stock CSS selector</label>
+                        <input id="notifyPath" type="text" placeholder="Example: div.btn-notify.btn">
+                        <div class="hint">Element used by the site when the product is unavailable.</div>
+                    </div>
+
+                    <div class="button-row">
+                        <button class="btn-outline" onclick="saveXpaths()">💾 Save selectors</button>
+                    </div>
+                </div>
+
+                <div class="field-row" style="margin-top:10px;">
+                    <div>
+                        <label for="urls">Product URLs (one per line)</label>
+                        <textarea id="urls" rows="7" placeholder="https://example.com/product/1
+https://example.com/product/2"></textarea>
+                        <div class="hint">You can monitor multiple URLs in parallel. Each line is checked in its own worker.</div>
+                    </div>
+
+                    <div class="button-row">
+                        <button class="btn-primary" onclick="start()">▶ Start monitoring</button>
+                        <button class="btn-danger" onclick="stop()">■ Stop</button>
+                        <span class="pill">Checks run every few seconds in the background.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: logs -->
+        <div class="card">
+            <div class="card-inner">
+                <div class="card-header">
+                    <div>
+                        <div class="title">Live output</div>
+                        <div class="subtitle">Realtime health + “Buy now” hits with auto‑scroll</div>
+                    </div>
+                    <span class="badge">Step 2 · Watch signals</span>
+                </div>
+
+                <div class="columns-logs">
+                    <div>
+                        <div class="card-header" style="padding:0; margin-bottom:6px;">
+                            <div style="display:flex; flex-direction:column; gap:2px;">
+                                <span style="font-size:13px; font-weight:600;">Live logs</span>
+                                <span class="hint">Every poll result, including errors and out‑of‑stock states.</span>
+                            </div>
+                            <button class="btn-outline" style="padding-inline:10px;" onclick="clearLive()">🧹 Clear</button>
+                        </div>
+                        <textarea id="liveBox" class="logBox" readonly></textarea>
+                    </div>
+
+                    <div>
+                        <div class="card-header" style="padding:0; margin-bottom:6px;">
+                            <div style="display:flex; flex-direction:column; gap:2px;">
+                                <span style="font-size:13px; font-weight:600;">Buy Now hits</span>
+                                <span class="hint">Only items that became orderable (also pushed to Telegram).</span>
+                            </div>
+                            <button class="btn-outline" style="padding-inline:10px;" onclick="clearBuy()">🧹 Clear</button>
+                        </div>
+                        <textarea id="buyBox" class="logBox" readonly></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ---------- CONTROLS ----------
+function start() {
+    fetch('/start', {
+        method: 'POST',
+        headers: {'Content-Type': 'text/plain'},
+        body: document.getElementById('urls').value
+    });
+}
+
+function stop() {
+    fetch('/stop', {method:'POST'});
+}
+
+function clearLive() {
+    fetch('/logs/live/clear', {method:'POST'});
+    document.getElementById("liveBox").value = "";
+}
+
+function clearBuy() {
+    fetch('/logs/buynow/clear', {method:'POST'});
+    document.getElementById("buyBox").value = "";
+}
+
+// ---------- XPATH / SELECTOR SETTINGS ----------
+function saveXpaths() {
+    fetch('/xpaths', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            buyNow: document.getElementById('buyNowPath').value,
+            notifyMe: document.getElementById('notifyPath').value
+        })
+    });
+}
+
+function loadXpaths() {
+    fetch('/xpaths')
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('buyNowPath').value = data.buyNow || '';
+            document.getElementById('notifyPath').value = data.notifyMe || '';
+        });
+}
+
+// ---------- LOG AUTO‑SCROLL ----------
+let liveUserScrolledUp = false;
+let buyUserScrolledUp = false;
+
+const liveBox = document.getElementById("liveBox");
+const buyBox = document.getElementById("buyBox");
+
+liveBox.addEventListener('scroll', () => {
+    const nearBottom = liveBox.scrollHeight - liveBox.scrollTop - liveBox.clientHeight < 10;
+    liveUserScrolledUp = !nearBottom;
+});
+
+buyBox.addEventListener('scroll', () => {
+    const nearBottom = buyBox.scrollHeight - buyBox.scrollTop - buyBox.clientHeight < 10;
+    buyUserScrolledUp = !nearBottom;
+});
+
+setInterval(() => {
+    // Live logs
+    fetch('/logs/live')
+        .then(res => res.json())
+        .then(data => {
+            liveBox.value = data.join("\n");
+            if (!liveUserScrolledUp) {
+                liveBox.scrollTop = liveBox.scrollHeight;
+            }
+        });
+
+    // Buy now logs
+    fetch('/logs/buynow')
+        .then(res => res.json())
+        .then(data => {
+            buyBox.value = data.join("\n");
+            if (!buyUserScrolledUp) {
+                buyBox.scrollTop = buyBox.scrollHeight;
+            }
+        });
+}, 2000);
+
+// Initial load
+loadXpaths();
+</script>
+
+</body>
+</html>
